@@ -36,7 +36,7 @@ function OnNetflix(key, type, title) {
 		}.bind(this));
 		newResponse.on('end', function() {
 			sourceBody  = JSON.parse(string);
-			sourceArray = sourceBody.subscription_web_sources;
+			sourceArray = sourceBody.subscription_web_sources.length ? sourceBody.subscription_web_sources : [false];
 			sourceArray.forEach( function(src) {
 				if(src.source === 'netflix') {
 					returnObject = { isOnNetlix: true, movieLink: src.link };
