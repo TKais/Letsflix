@@ -3,79 +3,81 @@ var http = require('http');
 var util = require("util");
 
 function OnNetflix(key, type, title) {
-	var that = this;
-	var request      = http.get('http://api-public.guidebox.com/v2/search\?api_key\=' + key + '\&type\=' + type + '\&field\=title\&query\=' + title, function(response) {
-		var responseData;
-		var isNetflix;
-		var errorMessage = new Error('There was a problem retrieving data for ' + title);
-		var body         = '';
-		var sourceBody   = '';
+	var self = this;
+	http.get('http://api-public.guidebox.com/v2/search\?api_key\=' + key + '\&type\=' + type + '\&field\=title\&query\=' + title, function(response) {
+		handleMovieQuery.call(self, response)});
 
-		var findID = function(responseData) {
-			return new Promise( function(resolve, reject) {
-				if(responseData.results.length > 0) {
-					resolve(responseData.results[responseData.results.length - 1].id);
+	var findID = function(responseData) {
+		return new Promise( function(resolve, reject) {
+			if(responseData.results.length > 0) {
+				resolve(responseData.results[responseData.results.length - 1].id);
+			} else {
+				reject(Error(errorMessage));
+			}
+		});
+	}
+
+	var handleSourceQuery = function(id) {
+		var self = this;
+		var newType = type === 'movie' ? 'movies' : 'shows';
+		var movieRequest = http.get('http://api-public.guidebox.com/v2/' + newType + '/' + id + '\?api_key\=' + key + '\&sources\=netflix', function(newResponse){
+			handleResponse.call(self, newResponse);
+		});
+	}
+
+	var handleResponse = function(newResponse) {
+		var string = '';
+		var sourceBody = '';
+		var returnObject;
+
+		newResponse.on('data', function(chunk) {
+			string += chunk;
+			this.emit('data', chunk);
+		}.bind(this));
+		newResponse.on('end', function() {
+			sourceBody  = JSON.parse(string);
+			sourceArray = sourceBody.subscription_web_sources;
+			sourceArray.forEach( function(src) {
+				if(src.source === 'netflix') {
+					returnObject = { isOnNetlix: true, movieLink: src.link };
 				} else {
-					reject(Error(errorMessage));
+					returnObject = { isOnNetlix: false };
 				}
 			});
-		}
+			this.emit('end', returnObject);
+		}.bind(this));
+	}
 
-		var handleResponse = function(newResponse) {
-			var string = '';
-			var returnObject;
+	var handleMovieQuery = function(response) {
+		var responseData;
+		var body = '';
+		var errorMessage = new Error('There was a problem retrieving data for ' + title);
 
-			newResponse.on('data', function(chunk) {
-				string += chunk;
-				that.emit('data', chunk);
-			});
-			newResponse.on('end', function() {
-				sourceBody  = JSON.parse(string);
-				sourceArray = sourceBody.subscription_web_sources;
-				sourceArray.forEach( function(src) {
-					if(src.source === 'netflix') {
-						returnObject = { isOnNetlix: true, movieLink: src.link };
-					} else {
-						returnObject = { isOnNetlix: false };
-					}
-				});
-				that.emit('end', returnObject);
-			});
-		}
-
-		var isOnNetflix = function(id) {
-			var newType = type === 'movie' ? 'movies' : 'shows';
-			var movieRequest = http.get('http://api-public.guidebox.com/v2/' + newType + '/' + id + '\?api_key\=' + key + '\&sources\=netflix', function(newResponse){
-				handleResponse(newResponse);
-			});
-		}
-
-
-		EventEmitter.call(that);
+		EventEmitter.call(this);
 
 		if(response.statusCode !== 200) {
 			request.abort();
-			that.emit('error', errorMessage);
+			this.emit('error', errorMessage);
 		}
 
 		response.on('data', function(chunk) {
 			body += chunk;
-			that.emit('data', chunk);
-		});
+			this.emit('data', chunk);
+		}.bind(this));
 
 		response.on('end', function() {
 			if(response.statusCode === 200) {
 				try {
 					responseData = JSON.parse(body);
-					findID(responseData).then(isOnNetflix);
+					findID.call(this, responseData).then(handleSourceQuery.bind(this));
 				} catch (error) {
-					that.emit('error', error);
+					this.emit('error', error);
 				}
 			}
-		}).on('error', function(error) {
-			that.emit('error', error);
-		});
-	});
+		}.bind(this)).on('error', function(error) {
+			this.emit('error', error);
+		}.bind(this));
+	}
 }
 
 util.inherits(OnNetflix, EventEmitter);
