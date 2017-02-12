@@ -1,0 +1,22 @@
+{
+  "name": "letsflix",
+  "version": "1.0.0",
+  "description": "An app for discovering whether a movie or TV show is available on Netflix",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TKais/Letsflix.git"
+  },
+  "keywords": [
+    "netflix"
+  ],
+  "author": "Tiffany T Kaiser",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TKais/Letsflix/issues"
+  },
+  "homepage": "https://github.com/TKais/Letsflix#readme"
+}
