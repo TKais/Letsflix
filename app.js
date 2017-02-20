@@ -4,51 +4,92 @@ var util = require("util");
 
 function OnNetflix(key, type, title) {
 	var self = this;
-	http.get('http://api-public.guidebox.com/v2/search\?api_key\=' + key + '\&type\=' + type + '\&field\=title\&query\=' + title, function(response) {
-		handleMovieQuery.call(self, response)});
+	http.get('http://api-public.guidebox.com/v2/search\?api_key\=' + key + '\&type\=' + type + '\&field\=title\&query\=' + title + '\&sources=subscription', function(response) {
+		handleTitleQuery.call(self, response)});
 
 	var findID = function(responseData) {
 		return new Promise( function(resolve, reject) {
 			if(responseData.results.length > 0) {
-				resolve(responseData.results[responseData.results.length - 1].id);
+				resolve(selectResult(responseData.results).id);
 			} else {
 				reject(Error(errorMessage));
 			}
 		});
 	}
 
+	var selectResult = function(results) {
+		var searchTitle;
+		var regex = new RegExp("^" + title + "$");
+		if(results.length === 1) { return results[0]; }
+		results.forEach( function(result) {
+			if(result.title.match(regex)) {
+				searchTitle = result;
+			}
+		});
+		return searchTitle;
+	}
+
 	var handleSourceQuery = function(id) {
 		var self = this;
-		var newType = type === 'movie' ? 'movies' : 'shows';
-		var movieRequest = http.get('http://api-public.guidebox.com/v2/' + newType + '/' + id + '\?api_key\=' + key + '\&sources\=netflix', function(newResponse){
-			handleResponse.call(self, newResponse);
+		var movieQueryString = 'http://api-public.guidebox.com/v2/movies/' + id + '\?api_key\=' + key;
+		var showQueryString = 'http://api-public.guidebox.com/v2/shows/' + id + '/available_content\?api_key\=' + key;
+		var requestString = type === 'movie' ? movieQueryString : showQueryString;
+		var sourceRequest = http.get( requestString, function(newResponse){
+			handleSourceResponse.call(self, newResponse);
 		});
 	}
 
-	var handleResponse = function(newResponse) {
-		var string = '';
+	var returnMovieObject = function(sourceBody) {
+		var sourceArray = sourceBody.subscription_web_sources.length ? sourceBody.subscription_web_sources : [false];
+		var returnedSource;
+		sourceArray.forEach( function(src) {
+			if(src.source === 'netflix') {
+				returnedSource = { isOnNetlix: true, info: sourceBody };
+			} else {
+				returnedSource = { isOnNetlix: false };
+			}
+		});
+		return returnedSource;
+	}
+
+	var returnShowObject = function(sourceBody) {
+		var showSources = sourceBody.results.web.episodes.all_sources;
+		var returnedSource;
+		if(showSources.length > 0) {
+			showSources.forEach( function(src) {
+				if(src.source === 'netflix') {
+					returnedSource = { isOnNetlix: true, info: sourceBody };
+				} else {
+					returnedSource = { isOnNetlix: false };
+				}
+			});
+		} else {
+			returnedSource = 'No sources found for ' + title;
+		}
+		return returnedSource;
+	}
+
+	var handleSourceResponse = function(newResponse) {
+		var responseString = '';
 		var sourceBody = '';
 		var returnObject;
 
 		newResponse.on('data', function(chunk) {
-			string += chunk;
+			responseString += chunk;
 			this.emit('data', chunk);
 		}.bind(this));
 		newResponse.on('end', function() {
-			sourceBody  = JSON.parse(string);
-			sourceArray = sourceBody.subscription_web_sources.length ? sourceBody.subscription_web_sources : [false];
-			sourceArray.forEach( function(src) {
-				if(src.source === 'netflix') {
-					returnObject = { isOnNetlix: true, movieLink: src.link };
-				} else {
-					returnObject = { isOnNetlix: false };
-				}
-			});
+			sourceBody  = JSON.parse(responseString);
+			if(type === 'movie') {
+				returnObject = returnMovieObject.call(this, sourceBody);
+			} else {
+				returnObject = returnShowObject.call(this, sourceBody);
+			}
 			this.emit('end', returnObject);
 		}.bind(this));
 	}
 
-	var handleMovieQuery = function(response) {
+	var handleTitleQuery = function(response) {
 		var responseData;
 		var body = '';
 		var errorMessage = new Error('There was a problem retrieving data for ' + title);
