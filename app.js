@@ -41,12 +41,14 @@ function OnNetflix(key, type, title) {
 
 	var returnMovieObject = function(sourceBody) {
 		var sourceArray = sourceBody.subscription_web_sources.length ? sourceBody.subscription_web_sources : [false];
+		var alternativesArray = [];
 		var returnedSource;
-		sourceArray.forEach( function(src) {
+		sourceArray && sourceArray.forEach( function(src) {
 			if(src.source === 'netflix') {
-				returnedSource = { isOnNetlix: true, info: sourceBody };
+				returnedSource = { isOnNetlix: true, link: src.link };
 			} else {
-				returnedSource = { isOnNetlix: false };
+				alternativesArray.push(src.source)
+				returnedSource = { isOnNetlix: false, alternatives: alternativesArray };
 			}
 		});
 		return returnedSource;
