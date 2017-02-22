@@ -10,23 +10,26 @@ function OnNetflix(key, type, title) {
 	var findID = function(responseData) {
 		return new Promise( function(resolve, reject) {
 			if(responseData.results.length > 0) {
-				resolve(selectResult(responseData.results).id);
+				resolve(selectResult.call(this, responseData.results).id);
 			} else {
 				reject(Error(errorMessage));
 			}
-		});
+		}.bind(this));
 	}
 
 	var selectResult = function(results) {
 		var searchTitle;
+		var error = new Error('Could not find title ' + title);
 		var regex = new RegExp('^' + title + '$');
 		if(results.length === 1) { return results[0]; }
-		results.forEach( function(result) {
+		results.some( function(result) {
 			if(result.title.match(regex)) {
 				searchTitle = result;
+				return true;
 			}
 		});
-		return searchTitle;
+
+		if(searchTitle) { return searchTitle; } else { this.emit('error', error); }
 	}
 
 	var handleSourceQuery = function(id) {
@@ -43,26 +46,34 @@ function OnNetflix(key, type, title) {
 		var sourceArray = sourceBody.subscription_web_sources.length ? sourceBody.subscription_web_sources : [false];
 		var alternativesArray = [];
 		var returnedSource;
-		sourceArray && sourceArray.forEach( function(src) {
-			if(src.source === 'netflix') {
-				returnedSource = { isOnNetlix: true, link: src.link };
-			} else {
-				alternativesArray.push(src.source)
-				returnedSource = { isOnNetlix: false, alternatives: alternativesArray };
-			}
-		});
+		if(sourceArray.length > 0) {
+			sourceArray.some( function(src) {
+				if(src.source === 'netflix') {
+					returnedSource = { isOnNetlix: true, link: src.link };
+					return true;
+				} else {
+					alternativesArray.push(src.source)
+					returnedSource = { isOnNetlix: false, alternatives: alternativesArray };
+				}
+			});
+		} else {
+			returnedSource = 'No sources found for ' + title;
+		}
 		return returnedSource;
 	}
 
 	var returnShowObject = function(sourceBody) {
 		var showSources = sourceBody.results.web.episodes.all_sources;
+		var alternativesArray = [];
 		var returnedSource;
 		if(showSources.length > 0) {
-			showSources.forEach( function(src) {
+			showSources.some( function(src) {
 				if(src.source === 'netflix') {
-					returnedSource = { isOnNetlix: true, info: sourceBody };
+					returnedSource = { isOnNetlix: true };
+					return true;
 				} else {
-					returnedSource = { isOnNetlix: false };
+					alternativesArray.push(src.source);
+					returnedSource = { isOnNetlix: false, alternatives: alternativesArray };
 				}
 			});
 		} else {
@@ -95,6 +106,7 @@ function OnNetflix(key, type, title) {
 		var responseData;
 		var body = '';
 		var errorMessage = new Error('There was a problem retrieving data for ' + title);
+		var noSuchTitle = new Error('There were no results for ' + title);
 
 		EventEmitter.call(this);
 
@@ -112,7 +124,11 @@ function OnNetflix(key, type, title) {
 			if(response.statusCode === 200) {
 				try {
 					responseData = JSON.parse(body);
-					findID.call(this, responseData).then(handleSourceQuery.bind(this));
+					if(responseData.total_results > 0) {
+						findID.call(this, responseData).then(handleSourceQuery.bind(this));
+					} else {
+						this.emit('error', noSuchTitle);
+					}
 				} catch (error) {
 					this.emit('error', error);
 				}
