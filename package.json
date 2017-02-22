@@ -1,7 +1,7 @@
 {
   "name": "letsflix",
   "version": "1.0.0",
-  "description": "An app for discovering whether a movie or TV show is available on Netflix",
+  "description": "An npm package for discovering whether a movie or TV show is available on Netflix from the Guidebox API.",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
