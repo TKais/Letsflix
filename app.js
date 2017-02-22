@@ -1,6 +1,6 @@
-var EventEmitter = require("events").EventEmitter;
+var EventEmitter = require('events').EventEmitter;
 var http = require('http');
-var util = require("util");
+var util = require('util');
 
 function OnNetflix(key, type, title) {
 	var self = this;
@@ -19,7 +19,7 @@ function OnNetflix(key, type, title) {
 
 	var selectResult = function(results) {
 		var searchTitle;
-		var regex = new RegExp("^" + title + "$");
+		var regex = new RegExp('^' + title + '$');
 		if(results.length === 1) { return results[0]; }
 		results.forEach( function(result) {
 			if(result.title.match(regex)) {
