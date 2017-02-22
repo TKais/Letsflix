@@ -1,6 +1,6 @@
 # Letsflix
 
-An npm package for discovering whether a movie or TV show is available on Netflix from the Guidebox API.
+An npm package for discovering whether a movie or TV show is available on Netflix from the Guidebox API. If not, alternative sources are provided.
 
 ## Basic Usage
 
