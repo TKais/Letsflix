@@ -1,6 +1,6 @@
 {
   "name": "letsflix",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "An npm package for discovering whether a movie or TV show is available on Netflix from the Guidebox API. If not, alternative sources are provided.",
   "main": "app.js",
   "scripts": {
@@ -11,7 +11,8 @@
     "url": "git+https://github.com/TKais/Letsflix.git"
   },
   "keywords": [
-    "netflix"
+    "netflix",
+    "Guidebox"
   ],
   "author": "Tiffany T Kaiser",
   "license": "ISC",
