@@ -2,7 +2,7 @@ const EventEmitter = require('events').EventEmitter;
 const http = require('http');
 const util = require('util');
 
-function OnNetflix(key, type, title) {
+function Letsflix(key, type, title) {
 	var self = this;
 	http.get('http://api-public.guidebox.com/v2/search\?api_key\=' + key + '\&type\=' + type + '\&field\=title\&query\=' + title + '\&sources=subscription', (response) => {
 		handleTitleQuery.call(self, response)});
@@ -139,6 +139,6 @@ function OnNetflix(key, type, title) {
 	}
 }
 
-util.inherits(OnNetflix, EventEmitter);
+util.inherits(Letsflix, EventEmitter);
 
-module.exports = OnNetflix;
+module.exports = Letsflix;
