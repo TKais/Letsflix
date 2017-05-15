@@ -1,14 +1,14 @@
-var EventEmitter = require('events').EventEmitter;
-var http = require('http');
-var util = require('util');
+const EventEmitter = require('events').EventEmitter;
+const http = require('http');
+const util = require('util');
 
 function OnNetflix(key, type, title) {
 	var self = this;
-	http.get('http://api-public.guidebox.com/v2/search\?api_key\=' + key + '\&type\=' + type + '\&field\=title\&query\=' + title + '\&sources=subscription', function(response) {
+	http.get('http://api-public.guidebox.com/v2/search\?api_key\=' + key + '\&type\=' + type + '\&field\=title\&query\=' + title + '\&sources=subscription', (response) => {
 		handleTitleQuery.call(self, response)});
 
-	var findID = function(responseData) {
-		return new Promise( function(resolve, reject) {
+	const findID = (responseData) => {
+		return new Promise( (resolve, reject) => {
 			if(responseData.results.length > 0) {
 				resolve(selectResult.call(this, responseData.results).id);
 			} else {
@@ -17,12 +17,12 @@ function OnNetflix(key, type, title) {
 		}.bind(this));
 	}
 
-	var selectResult = function(results) {
+	const selectResult = (results) => {
 		var searchTitle;
 		var error = new Error('Could not find title ' + title);
 		var regex = new RegExp('^' + title + '$');
 		if(results.length === 1) { return results[0]; }
-		results.some( function(result) {
+		results.some( (result) => {
 			if(result.title.match(regex)) {
 				searchTitle = result;
 				return true;
@@ -32,22 +32,22 @@ function OnNetflix(key, type, title) {
 		if(searchTitle) { return searchTitle; } else { this.emit('error', error); }
 	}
 
-	var handleSourceQuery = function(id) {
+	const handleSourceQuery = (id) => {
 		var self = this;
 		var movieQueryString = 'http://api-public.guidebox.com/v2/movies/' + id + '\?api_key\=' + key;
 		var showQueryString = 'http://api-public.guidebox.com/v2/shows/' + id + '/available_content\?api_key\=' + key;
 		var requestString = type === 'movie' ? movieQueryString : showQueryString;
-		var sourceRequest = http.get( requestString, function(newResponse){
+		var sourceRequest = http.get( requestString, (newResponse) => {
 			handleSourceResponse.call(self, newResponse);
 		});
 	}
 
-	var returnMovieObject = function(sourceBody) {
+	const returnMovieObject = (sourceBody) => {
 		var sourceArray = sourceBody.subscription_web_sources.length ? sourceBody.subscription_web_sources : [false];
 		var alternativesArray = [];
 		var returnedSource;
 		if(sourceArray.length > 0) {
-			sourceArray.some( function(src) {
+			sourceArray.some( (src) => {
 				if(src.source === 'netflix') {
 					returnedSource = { isOnNetlix: true, link: src.link };
 					return true;
@@ -62,12 +62,12 @@ function OnNetflix(key, type, title) {
 		return returnedSource;
 	}
 
-	var returnShowObject = function(sourceBody) {
+	const returnShowObject = (sourceBody) => {
 		var showSources = sourceBody.results.web.episodes.all_sources;
 		var alternativesArray = [];
 		var returnedSource;
 		if(showSources.length > 0) {
-			showSources.some( function(src) {
+			showSources.some( (src) => {
 				if(src.source === 'netflix') {
 					returnedSource = { isOnNetlix: true };
 					return true;
@@ -82,16 +82,16 @@ function OnNetflix(key, type, title) {
 		return returnedSource;
 	}
 
-	var handleSourceResponse = function(newResponse) {
+	const handleSourceResponse = (newResponse) => {
 		var responseString = '';
 		var sourceBody = '';
 		var returnObject;
 
-		newResponse.on('data', function(chunk) {
+		newResponse.on('data', (chunk) => {
 			responseString += chunk;
 			this.emit('data', chunk);
 		}.bind(this));
-		newResponse.on('end', function() {
+		newResponse.on('end', () => {
 			sourceBody  = JSON.parse(responseString);
 			if(type === 'movie') {
 				returnObject = returnMovieObject.call(this, sourceBody);
@@ -102,7 +102,7 @@ function OnNetflix(key, type, title) {
 		}.bind(this));
 	}
 
-	var handleTitleQuery = function(response) {
+	const handleTitleQuery = (response) => {
 		var responseData;
 		var body = '';
 		var errorMessage = new Error('There was a problem retrieving data for ' + title);
@@ -115,12 +115,12 @@ function OnNetflix(key, type, title) {
 			this.emit('error', errorMessage);
 		}
 
-		response.on('data', function(chunk) {
+		response.on('data', (chunk) => {
 			body += chunk;
 			this.emit('data', chunk);
 		}.bind(this));
 
-		response.on('end', function() {
+		response.on('end', () => {
 			if(response.statusCode === 200) {
 				try {
 					responseData = JSON.parse(body);
@@ -133,7 +133,7 @@ function OnNetflix(key, type, title) {
 					this.emit('error', error);
 				}
 			}
-		}.bind(this)).on('error', function(error) {
+		}.bind(this)).on('error', (error) => {
 			this.emit('error', error);
 		}.bind(this));
 	}

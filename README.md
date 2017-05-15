@@ -1,11 +1,11 @@
 # Letsflix
 
-An npm package for discovering whether a movie or TV show is available on Netflix from the Guidebox API. If not, alternative sources are provided.
+An npm package written in ES6 for discovering whether a movie or TV show is available on Netflix from the Guidebox API. If not, alternative sources are provided.
 
 ## Basic Usage
 
 ```javascript
-var Letsflix = require('letsflix');
+const Letsflix = require('letsflix');
 
 /**
 * Letsflix accepts three parameters:
@@ -13,7 +13,7 @@ var Letsflix = require('letsflix');
 * @type (string) => Either 'movie' or 'show'
 * @title (string) => The movie or TV show title
 **/
-var netflixQuery = new Letsflix('api_key', 'show', 'Abstract');
+let netflixQuery = new Letsflix('api_key', 'show', 'Abstract');
 
 netflixQuery.on('end', console.dir);
 
