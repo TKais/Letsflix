@@ -3,14 +3,13 @@ const http = require('http');
 const util = require('util');
 
 function Letsflix(key, type, title) {
-	var self = this;
 	http.get('http://api-public.guidebox.com/v2/search\?api_key\=' + key + '\&type\=' + type + '\&field\=title\&query\=' + title + '\&sources=subscription', (response) => {
-		handleTitleQuery.call(self, response)});
+		handleTitleQuery(response) });
 
 	const findID = (responseData) => {
 		return new Promise( (resolve, reject) => {
 			if(responseData.results.length > 0) {
-				resolve(selectResult.call(this, responseData.results).id);
+				resolve(selectResult(responseData.results).id);
 			} else {
 				reject(Error(errorMessage));
 			}
@@ -33,12 +32,11 @@ function Letsflix(key, type, title) {
 	}
 
 	const handleSourceQuery = (id) => {
-		var self = this;
 		var movieQueryString = 'http://api-public.guidebox.com/v2/movies/' + id + '\?api_key\=' + key;
 		var showQueryString = 'http://api-public.guidebox.com/v2/shows/' + id + '/available_content\?api_key\=' + key;
 		var requestString = type === 'movie' ? movieQueryString : showQueryString;
 		var sourceRequest = http.get( requestString, (newResponse) => {
-			handleSourceResponse.call(self, newResponse);
+			handleSourceResponse(newResponse);
 		});
 	}
 
