@@ -14,7 +14,7 @@ function Letsflix(key, type, title) {
 			} else {
 				reject(Error(errorMessage));
 			}
-		}.bind(this));
+		});
 	}
 
 	const selectResult = (results) => {
@@ -90,7 +90,7 @@ function Letsflix(key, type, title) {
 		newResponse.on('data', (chunk) => {
 			responseString += chunk;
 			this.emit('data', chunk);
-		}.bind(this));
+		});
 		newResponse.on('end', () => {
 			sourceBody  = JSON.parse(responseString);
 			if(type === 'movie') {
@@ -99,7 +99,7 @@ function Letsflix(key, type, title) {
 				returnObject = returnShowObject.call(this, sourceBody);
 			}
 			this.emit('end', returnObject);
-		}.bind(this));
+		});
 	}
 
 	const handleTitleQuery = (response) => {
@@ -118,7 +118,7 @@ function Letsflix(key, type, title) {
 		response.on('data', (chunk) => {
 			body += chunk;
 			this.emit('data', chunk);
-		}.bind(this));
+		});
 
 		response.on('end', () => {
 			if(response.statusCode === 200) {
@@ -133,9 +133,9 @@ function Letsflix(key, type, title) {
 					this.emit('error', error);
 				}
 			}
-		}.bind(this)).on('error', (error) => {
+		}).on('error', (error) => {
 			this.emit('error', error);
-		}.bind(this));
+		});
 	}
 }
 
